@@ -1,5 +1,57 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<GolBet.Entities.Match>
+
 @{
+    ViewData["Title"] = "Cartelera de Partidos";
 }
+
+<div class="container my-4">
+    <h2 class="mb-4">Cartelera de Partidos</h2>
+
+    <form method="get" asp-action="Index" class="row mb-4">
+        @if (!string.IsNullOrEmpty(ViewBag.CurrentStatus))
+        {
+            <input type="hidden" name="status" value="@ViewBag.CurrentStatus" />
+        }
+
+        <div class="col-md-8 col-lg-6 d-flex gap-2">
+            <input type="text" name="search" class="form-control" placeholder="Buscar equipo..." value="@ViewBag.CurrentSearch" />
+            <button type="submit" class="btn btn-success">Buscar</button>
+            @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string))
+            {
+                <a asp-action="Index" asp-route-status="@ViewBag.CurrentStatus" class="btn btn-outline-secondary">Limpiar</a>
+            }
+        </div>
+    </form>
+
+    <div class="mb-3">
+        <a asp-action="Index" asp-route-status="Programados" asp-route-search="@ViewBag.CurrentSearch" class="btn btn-outline-success">Programados</a>
+        <a asp-action="Index" asp-route-status="EnVivo" asp-route-search="@ViewBag.CurrentSearch" class="btn btn-outline-success">En Vivo</a>
+        <a asp-action="Index" asp-route-status="Finalizados" asp-route-search="@ViewBag.CurrentSearch" class="btn btn-outline-success">Finalizados</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Todos</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center py-4 my-4">
+            <h5>No hay partidos que coincidan con tu búsqueda</h5>
+            <p class="mb-3 text-muted">Intenta con otro nombre de equipo o limpia los filtros.</p>
+            <a asp-action="Index" class="btn btn-primary">Volver a la cartelera de partidos</a>
+        </div>
+    }
+    else
+    {
+        <div class="row mt-4">
+            @foreach (var match in Model)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card shadow-sm">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">@match.LocalTeam?.Name vs @match.VisitorTeam?.Name</h5>
+                            <p class="badge bg-secondary">@match.Status</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
