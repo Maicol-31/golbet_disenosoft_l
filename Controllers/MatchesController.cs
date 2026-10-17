@@ -1,42 +1,39 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using GolBet.Repositories.Data;
+﻿using GolBet.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace GolBet.Web.Controllers
 {
     public class MatchesController : Controller
     {
-        private readonly AppDbContext _context;
+        private readonly IMatchService _matchService;
+        private static bool _isFirstLoad = true;
 
-        public MatchesController(AppDbContext context)
+        public MatchesController(IMatchService matchService)
         {
-            _context = context;
+            _matchService = matchService;
         }
 
         public async Task<IActionResult> Index(string? status, string? search)
         {
-            ViewBag.CurrentStatus = status;
+            if (_isFirstLoad && string.IsNullOrEmpty(status) && string.IsNullOrEmpty(search))
+            {
+                _isFirstLoad = false;
+                return RedirectToAction("Index", "Home");
+            }
+
+            string? filterStatus = (string.IsNullOrEmpty(status) || status == "Todos") ? null : status;
+
+            var matches = await _matchService.GetBoardAsync(filterStatus, search);
+
+            ViewBag.CurrentStatus = string.IsNullOrEmpty(status) ? "Todos" : status;
             ViewBag.CurrentSearch = search;
 
-            var query = _context.Matches
-                .Include(m => m.Local)
-                .Include(m => m.Visitor)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(status))
-            {
-                query = query.Where(m => m.Status.ToString() == status);
-            }
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                string searchLower = search.ToLower();
-                query = query.Where(m => m.Local.Name.ToLower().Contains(searchLower)
-                                      || m.Visitor.Name.ToLower().Contains(searchLower));
-            }
-
-            var matches = await query.ToListAsync();
             return View(matches);
+        }
+
+        public IActionResult Welcome()
+        {
+            return View();
         }
     }
 }
