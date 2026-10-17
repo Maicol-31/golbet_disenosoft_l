@@ -11,5 +11,8 @@ namespace GolBet.Repositories.Contracts
         void Update(T entity);
         void Delete(T entity);
         Task<bool> SaveAsync();
+        Task<IEnumerable<T>> GetAllWithTeamsAsync(string? status = null, string? search = null);
     }
 }
+
+
