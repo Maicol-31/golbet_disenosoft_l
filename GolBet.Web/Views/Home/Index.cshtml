@@ -1,0 +1,120 @@
+﻿@model IEnumerable<GolBet.Services.DTOs.MatchDto>
+
+@{
+    ViewData["Title"] = "Cartelera de partidos";
+
+    string GetTeamColor(string? teamName) => teamName switch
+    {
+        var n when n != null && (n.Contains("Medellín", StringComparison.OrdinalIgnoreCase) || n.Contains("Santa Fe", StringComparison.OrdinalIgnoreCase) || n.Contains("América", StringComparison.OrdinalIgnoreCase) || n.Contains("Junior", StringComparison.OrdinalIgnoreCase)) => "bg-danger",
+        var n when n != null && (n.Contains("Nacional", StringComparison.OrdinalIgnoreCase) || n.Contains("Cali", StringComparison.OrdinalIgnoreCase)) => "bg-success",
+        var n when n != null && (n.Contains("Millonarios", StringComparison.OrdinalIgnoreCase) || n.Contains("Once", StringComparison.OrdinalIgnoreCase)) => "bg-primary",
+        _ => "bg-primary"
+    };
+}
+
+<div class="container">
+    <form method="get" asp-action="Index" class="mb-3">
+        @if (ViewBag.CurrentStatus != null && ViewBag.CurrentStatus.ToString() != "Todos")
+        {
+            <input type="hidden" name="status" value="@ViewBag.CurrentStatus" />
+        }
+        <div class="input-group input-group-lg shadow-sm">
+            <input type="text" name="search" class="form-control" placeholder="Buscar por equipo (ej. Nacional)..." value="@ViewBag.CurrentSearch" />
+            <button class="btn btn-primary px-5 fw-bold" type="submit">Buscar</button>
+            @if (!string.IsNullOrEmpty(ViewBag.CurrentSearch as string))
+            {
+                <a asp-action="Index" asp-route-status="@ViewBag.CurrentStatus" class="btn btn-outline-secondary d-flex align-items-center">Limpiar</a>
+            }
+        </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <a class="btn @(ViewBag.CurrentStatus == null || ViewBag.CurrentStatus.ToString() == "Todos" ? "btn-success" : "btn-outline-success") me-1" asp-action="Index" asp-route-status="Todos" asp-route-search="@ViewBag.CurrentSearch">Todos</a>
+            <a class="btn @(ViewBag.CurrentStatus?.ToString() == "Programado" ? "btn-success" : "btn-outline-success") me-1" asp-action="Index" asp-route-status="Programado" asp-route-search="@ViewBag.CurrentSearch">Programados</a>
+            <a class="btn @(ViewBag.CurrentStatus?.ToString() == "En juego" ? "btn-success" : "btn-outline-success") me-1" asp-action="Index" asp-route-status="En juego" asp-route-search="@ViewBag.CurrentSearch">En juego</a>
+            <a class="btn @(ViewBag.CurrentStatus?.ToString() == "Finalizado" ? "btn-success" : "btn-outline-success") me-1" asp-action="Index" asp-route-status="Finalizado" asp-route-search="@ViewBag.CurrentSearch">Finalizados</a>
+        </div>
+        <a class="btn btn-success" asp-action="Create">+ Nuevo partido</a>
+    </div>
+
+    <h2 class="mb-4">⚽ Cartelera de partidos</h2>
+
+    <div class="row">
+        @if (Model != null && Model.Any())
+        {
+            @foreach (var item in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm border" style="border-radius: 8px;">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center py-2 px-3 border-bottom-0">
+                            <small class="text-muted">🗓️ @item.Date.ToString("ddd dd MMM - h:mm tt")</small>
+                            <span class="badge @(item.Status == "Programado" ? "bg-primary" : item.Status == "En juego" ? "bg-warning text-dark" : "bg-secondary") px-2 py-1">
+                                @item.Status
+                            </span>
+                        </div>
+
+                        <div class="card-body text-center py-3">
+                            <div class="row align-items-center mb-3">
+                                <div class="col-5 text-center">
+                                    <div class="@GetTeamColor(item.HomeTeamName) text-white fw-bold d-flex align-items-center justify-content-center mx-auto mb-2 shadow-sm" style="width: 55px; height: 55px; border-radius: 4px; font-size: 1.1rem; letter-spacing: 0.5px;">
+                                        @(item.HomeTeamName?.Length >= 3 ? item.HomeTeamName.Substring(0, 3).ToUpper() : item.HomeTeamName)
+                                    </div>
+                                    <small class="fw-bold d-block text-muted text-truncate">@item.HomeTeamName</small>
+                                </div>
+
+                                <div class="col-2 text-center px-0">
+                                    @if (item.HomeGoals.HasValue && item.AwayGoals.HasValue)
+                                    {
+                                        <h3 class="fw-bold my-0">@item.HomeGoals - @item.AwayGoals</h3>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small fw-bold">VS</span>
+                                    }
+                                </div>
+
+                                <div class="col-5 text-center">
+                                    <div class="@GetTeamColor(item.AwayTeamName) text-white fw-bold d-flex align-items-center justify-content-center mx-auto mb-2 shadow-sm" style="width: 55px; height: 55px; border-radius: 4px; font-size: 1.1rem; letter-spacing: 0.5px;">
+                                        @(item.AwayTeamName?.Length >= 3 ? item.AwayTeamName.Substring(0, 3).ToUpper() : item.AwayTeamName)
+                                    </div>
+                                    <small class="fw-bold d-block text-muted text-truncate">@item.AwayTeamName</small>
+                                </div>
+                            </div>
+
+                            <div class="row bg-light border rounded mx-1 py-2 text-center">
+                                <div class="col-4 border-end px-1">
+                                    <div class="text-muted" style="font-size: 0.7rem;">1 - Local</div>
+                                    <div class="fw-bold text-dark mt-1">@item.HomeOdds.ToString("0.00")</div>
+                                </div>
+                                <div class="col-4 border-end px-1">
+                                    <div class="text-muted" style="font-size: 0.7rem;">X - Empate</div>
+                                    <div class="fw-bold text-dark mt-1">@item.DrawOdds.ToString("0.00")</div>
+                                </div>
+                                <div class="col-4 px-1">
+                                    <div class="text-muted" style="font-size: 0.7rem;">2 - Visitante</div>
+                                    <div class="fw-bold text-dark mt-1">@item.AwayOdds.ToString("0.00")</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white border-0 pb-3 text-center">
+                            <a asp-action="Detail" asp-route-id="@item.Id" class="btn btn-outline-secondary w-100 btn-sm py-1">Ver detalle</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12 text-center py-5">
+                <div class="alert alert-info text-center py-4 my-4 shadow-sm" style="border-radius: 8px;">
+                    <h5 class="fw-bold">No hay partidos para "@ViewBag.CurrentSearch"</h5>
+                    <p class="mb-3 text-muted">Intenta con otro nombre de equipo o cambia el filtro de estado actual.</p>
+                    <a asp-action="Index" class="btn btn-primary px-4">Volver a la cartelera de partidos</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
