@@ -1,0 +1,83 @@
+﻿@using GolBet.Web.Helpers
+@model IEnumerable<GolBet.Services.DTOs.BetDto>
+@{
+    ViewData["Title"] = "Mis apuestas";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>🎟️ Mis apuestas</h2>
+    <a asp-controller="Matches" asp-action="Index" class="btn btn-outline-success">
+        Ver cartelera
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Aún no has realizado apuestas. Entra al detalle de un partido programado para jugar tus FutCoins.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Partido</th>
+                    <th>Pronóstico</th>
+                    <th>Monto</th>
+                    <th>Cuota</th>
+                    <th>Pago potencial</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in Model)
+                {
+                    string selectionLabel = b.Selection switch
+                    {
+                        "Home" => "1 · Local",
+                        "Draw" => "X · Empate",
+                        "Away" => "2 · Visitante",
+                        _ => b.Selection
+                    };
+
+                    string badgeClass = b.Status switch
+                    {
+                        "Pending" => "bg-warning text-dark",
+                        "Won" => "bg-success",
+                        "Lost" => "bg-danger",
+                        _ => "bg-secondary"
+                    };
+
+                    string statusLabel = b.Status switch
+                    {
+                        "Pending" => "Pendiente",
+                        "Won" => "Ganada",
+                        "Lost" => "Perdida",
+                        _ => b.Status
+                    };
+
+                    <tr>
+                        <td><small>@b.CreatedAt.ToColombiaTime().ToString("dd/MM/yyyy h:mm tt")</small></td>
+                        <td class="fw-bold">
+                            <a asp-controller="Matches" asp-action="Detail" asp-route-id="@b.MatchId" class="text-decoration-none">
+                                @b.MatchTitle
+                            </a>
+                        </td>
+                        <td>@selectionLabel</td>
+                        <td>@b.Amount.ToString("N0") FutCoins</td>
+                        <td>@b.OddsAtBet.ToString("0.00")</td>
+                        <td class="fw-bold text-success">
+                            @((b.Payout ?? b.PotentialPayout).ToString("N0")) FutCoins
+                        </td>
+                        <td>
+                            <span class="badge @badgeClass">@statusLabel</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
